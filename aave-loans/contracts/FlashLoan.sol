@@ -10,21 +10,24 @@ import {IERC20} from "@aave/core-v3/contracts/dependencies/openzeppelin/contract
 import {Ownable} from "@aave/core-v3/contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 import {SafeMath} from "@aave/core-v3/contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 
-interface AAVE_LINK_INT {
+interface AAVE_TOKEN_INTERFACE {
     function mint(uint256 _wad) external payable;
 }
 
 contract FlashLoan is FlashLoanSimpleReceiverBase, Ownable {
 
     using SafeMath for uint256;
-    AAVE_LINK_INT public AAVE_LINK;
+    AAVE_TOKEN_INTERFACE public AAVE_TOKEN;
 
-    constructor(address _addressProvider, address tokenAddres) FlashLoanSimpleReceiverBase(IPoolAddressesProvider(_addressProvider)) {
-        AAVE_LINK = AAVE_LINK_INT(address(tokenAddres));
+    constructor(address _addressProvider) FlashLoanSimpleReceiverBase(IPoolAddressesProvider(_addressProvider)) {
+    }
+
+    function setAaveToken(address tokenAddres) public onlyOwner {
+        AAVE_TOKEN = AAVE_TOKEN_INTERFACE(address(tokenAddres));
     }
 
     function getTokens() public {
-        AAVE_LINK.mint(5000000000000000000);
+        AAVE_TOKEN.mint(5000000000000000000);
     }
 
     /**
@@ -48,14 +51,13 @@ contract FlashLoan is FlashLoanSimpleReceiverBase, Ownable {
         require(amount <= IERC20(asset).balanceOf(address(this)), "Invalid balance for the contract");
         require(IERC20(asset).balanceOf(address(this)) > 0, "Zero balance in contract");
 
-        // Your logic goes here.
+        // Your Arb logic goes here.
 
 
         // Make sure to have this call at the end
         uint256 amountOwed = amount.add(premium);
         require(IERC20(asset).balanceOf(address(this)) >= amountOwed, "Not enough amount to return loan");
         require(IERC20(asset).approve(address(POOL), amountOwed), "approve failed");
-        // IERC20(asset).approve(address(POOL), amountOwed);
         return true;
     }
 
@@ -93,4 +95,8 @@ contract FlashLoan is FlashLoanSimpleReceiverBase, Ownable {
     }
 
     receive() external payable {}
+
+    function withdraw() external onlyOwner {
+        payable(msg.sender).transfer(address(this).balance);
+    }
 }

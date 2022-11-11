@@ -11,14 +11,9 @@ const PoolAddressesProvider_Avalanche_Fuji =
 
 const PoolAddressesProvider_Aave = "0xc4dCB5126a3AfEd129BC3668Ea19285A9f56D15D";
 
-const aave_link = "0x07C725d58437504CA5f814AE406e70E21C5e8e9e";
-
 async function main() {
     const FlashLoan = await hre.ethers.getContractFactory("FlashLoan");
-    const flashLoan = await FlashLoan.deploy(
-        PoolAddressesProvider_Aave,
-        aave_link
-    );
+    const flashLoan = await FlashLoan.deploy(PoolAddressesProvider_Aave);
     await flashLoan.deployed();
     console.log(`Flashloan deployed to ${flashLoan.address}`);
 }
